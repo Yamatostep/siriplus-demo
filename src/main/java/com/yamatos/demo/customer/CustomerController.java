@@ -1,45 +1,64 @@
 package com.yamatos.demo.customer;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@CrossOrigin(origins = "http://localhost:8081")
+@RestController
+@RequestMapping("/api")
 public class CustomerController {
+
     @Autowired
-    private CustomerService service;
+    CustomerRepository customerRepository;
 
-    @RequestMapping("/")
-    public String viewHomePage(Model model) {
-        List<Customers> listCustomers = service.listAll();
-        model.addAttribute("listCustomers", listCustomers);
+    @GetMapping("/customers")
+    public ResponseEntity<List<Customers>> getAllCustomers() {
+        try {
+            List<Customers> customers = new ArrayList<Customers>();
 
-        return "index";
+            customerRepository.findAll().forEach(customers::add);
+
+            if (customers.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(customers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @RequestMapping("/new")
-    public String showNewCustomerPage(Model model) {
-        Customers customer = new Customers();
-        model.addAttribute("customer", customer);
+    @GetMapping("/customers/{id}")
+    public ResponseEntity<Customers> getCustomerById(@PathVariable("id") Integer id) {
+        Optional<Customers> customerData = customerRepository.findById(id);
 
-        return "new_customer";
+        if (customerData.isPresent()) {
+            return new ResponseEntity<>(customerData.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @PostMapping("/save")
-    public String saveCustomer(@ModelAttribute("customer") Customers customer) {
-        customer.setTaxType(0);
-        customer.setEmail(customer.getFirstName() + "@" + customer.getLastName() + ".com");
-        customer.setTel("00000000000000");
-        customer.setFax("00000000000000");
-        customer.setCusCode("00000");
-        customer.setOrdering(0);
-        service.save(customer);
-
-        return "redirect:/";
+    @PostMapping("/customers")
+    public ResponseEntity<Customers> createTutorial(@RequestBody Customers customer) {
+        try {
+            Customers _customer = customerRepository
+                    .save(new Customers(customer.getFirstName(), customer.getLastName()));
+            return new ResponseEntity<>(_customer, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

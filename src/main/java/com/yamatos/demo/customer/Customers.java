@@ -7,7 +7,7 @@ import javax.persistence.Id;
 import javax.persistence.TableGenerator;
 
 @Entity
-@TableGenerator(name="gen", initialValue=11)
+@TableGenerator(name = "gen", initialValue = 11)
 public class Customers {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "gen")
@@ -26,6 +26,21 @@ public class Customers {
     private String fax;
     private String cusCode;
     private Integer ordering;
+
+    public Customers() {
+
+    }
+
+    public Customers(String firstName, String lastName) {
+        this.setFirstName(firstName);
+        this.setLastName(lastName);
+        this.setTaxType(0);
+        this.setEmail(this.getFirstName() + "@" + this.getLastName() + ".com");
+        this.setTel("00000000000000");
+        this.setFax("00000000000000");
+        this.setCusCode("00000");
+        this.setOrdering(0);
+    }
 
     public Integer getId() {
         return id;
